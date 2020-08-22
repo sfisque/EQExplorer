@@ -92,6 +92,8 @@ public class Main
             System.out.println( String.format( "%d, %d, %d", _file.length(), _preamble, _numEntries ) );
             ArrayList<DirectoryEntry> _directory = new ArrayList<>();
             
+            Integer _fileListPos = 0;
+            
             for( int _i = 0 ; _i < _numEntries ; _i ++ )
             {
                 _raf.read( _buffer, 0, 4 );
@@ -118,6 +120,15 @@ public class Main
                 
                 _raf.read( _entry.rawData, 0, _compressedSize );
                 
+                // increment the _fileListPos so we can find the last one
+                if( _entry.offset > _directory.get( _fileListPos ).offset )
+                {
+                    _fileListPos = _i;
+                } 
+                // then uncompress the data
+                
+                // then restore the file pointer for next directory entry
+                
                 _raf.seek( _returnPointer );
             } 
             
@@ -128,8 +139,12 @@ public class Main
             _raf.read( _footer, 0, 4 );
             Integer _date = fourBytesToInt( _footer );
             
-            System.out.println( String.format( "%s : %d", _tag, _date ) );
+            // process the file list
             
+            
+            
+            System.out.println( String.format( "%s : %d", _tag, _date ) );
+        
         }
     }
     

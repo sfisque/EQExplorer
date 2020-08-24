@@ -7,11 +7,15 @@ package com.latticeware.eqexplorer;
 
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.DataFormatException;
+import java.util.zip.Inflater;
 
 
 
@@ -57,43 +61,36 @@ public class Main
     }
     
     
-    public int twoBytesToInt( byte[] _buffer )
-    {
-        return Byte.toUnsignedInt( _buffer[ 0 ] ) 
-                + ( Byte.toUnsignedInt( _buffer[ 1 ] ) * 256 );
-    }
-        
-    
     public void load( String _fileName ) throws IOException
     {
         File _file = new File( _fileName );
+        FileHeader _archiveHeader = new FileHeader();
+        
         
         try( RandomAccessFile _raf = new RandomAccessFile( _file, "r" ) )
         {
             byte[] _buffer = new byte[ 4 ];
 
             _raf.read( _buffer, 0, 4 );
-            Integer _preamble = fourBytesToInt( _buffer );
+            _archiveHeader.offset = fourBytesToInt( _buffer );
 
             _raf.read( _buffer, 0, 4 );
-            String _magic = new String( _buffer );
+            _archiveHeader.cookie = new String( _buffer );
             
             _raf.read( _buffer, 0 , 4 );
-            Integer _postamble = fourBytesToInt( _buffer );
+            _archiveHeader.magicValue = fourBytesToInt( _buffer );
             
-            System.out.println( String.format( "%d, %s, %d", _preamble, _magic, _postamble ) );
+            System.out.println( _archiveHeader.toString() );
 
-            _raf.seek( _preamble );
+            _raf.seek( _archiveHeader.offset );
             
 //            Integer _numEntries = _raf.readUnsignedShort();
             _raf.read( _buffer, 0, 4 );
             Integer _numEntries = fourBytesToInt( _buffer );
             
-            System.out.println( String.format( "%d, %d, %d", _file.length(), _preamble, _numEntries ) );
-            ArrayList<DirectoryEntry> _directory = new ArrayList<>();
-            
-            Integer _fileListPos = 0;
-            
+            System.out.println( String.format( "ArchiveHeader : %d : %d : %d", _file.length(), _archiveHeader.offset, _numEntries ) );
+            TreeMap<Integer, DirectoryEntry> _directoryMap = new TreeMap<>();
+                                    
             for( int _i = 0 ; _i < _numEntries ; _i ++ )
             {
                 _raf.read( _buffer, 0, 4 );
@@ -106,31 +103,59 @@ public class Main
                 Integer _inflatedLength = fourBytesToInt( _buffer );
                 
                 DirectoryEntry _entry = new DirectoryEntry( _crc, _dataOffset, _inflatedLength );
-                _directory.add( _entry );
+                _directoryMap.put( _dataOffset, _entry);
                 
-                System.out.println( String.format( "%d : %d : %d : %d", _i, _crc, _dataOffset, _inflatedLength ) );
-                
+                System.out.println( String.format( "Directory Entry : %d : %d : %d : %d", _i, _crc, _dataOffset, _inflatedLength ) );
+            
                 Long _returnPointer = _raf.getFilePointer();
                 _raf.seek( _dataOffset );
                 
-                _raf.read( _buffer, 0 , 4 );
-                Integer _compressedSize = fourBytesToInt( _buffer );
-                _raf.read( _buffer, 0 , 4 );
-                Integer _uncompressedSize = fourBytesToInt( _buffer );
+                int _countBig = 0;
+                int _countLittle = 0;
+                byte[] _fileBuffer = new byte[ _inflatedLength ];
                 
-                _raf.read( _entry.rawData, 0, _compressedSize );
-                
-                // increment the _fileListPos so we can find the last one
-                if( _entry.offset > _directory.get( _fileListPos ).offset )
+                while( _countBig < _entry.inflatedSize )
                 {
-                    _fileListPos = _i;
-                } 
+                    _raf.read( _buffer, 0 , 4 );
+                    Integer _compressedSize = fourBytesToInt( _buffer );
+                    _raf.read( _buffer, 0 , 4 );
+                    Integer _uncompressedSize = fourBytesToInt( _buffer );
+
+                    System.out.println( String.format( "\tDataBlock : %d : %d", _compressedSize, _uncompressedSize ) );
+                    
+                    byte[] _temp = new byte[ _compressedSize ];
+                    _raf.read( _temp, 0, _compressedSize );
+                    
+                    try
+                    {
+                        System.arraycopy( expand( _temp, _compressedSize, _uncompressedSize )
+                                , 0, _entry.rawData, _countBig, _uncompressedSize );
+                    }
+                    catch( DataFormatException ex )
+                    {
+                        Logger.getLogger( Main.class.getName() ).log( Level.SEVERE, null, ex );
+                    }
+                    
+                    _countBig += _uncompressedSize;
+                    _countLittle += _compressedSize;
+                }
+                _entry.compressedSize = _countLittle;
+                
+                System.out.println( String.format( "\t\tbuffer read :: %d", _countBig ) );
+
                 // then uncompress the data
+//                expand( _entry.rawData );
                 
                 // then restore the file pointer for next directory entry
                 
                 _raf.seek( _returnPointer );
             } 
+            
+            // process the file name list
+            
+            
+            
+            // process the footer
             
             byte[] _footer = new byte[ 5 ];
             _raf.read( _footer, 0, 5 );
@@ -139,18 +164,129 @@ public class Main
             _raf.read( _footer, 0, 4 );
             Integer _date = fourBytesToInt( _footer );
             
-            // process the file list
-            
-            
-            
             System.out.println( String.format( "%s : %d", _tag, _date ) );
-        
+            
+            DirectoryEntry _fileListing = _directoryMap.lastEntry().getValue();
+            try
+            {
+                expand( _fileListing.rawData
+                        , _fileListing.compressedSize
+                        , _fileListing.inflatedSize );
+            }
+            catch( DataFormatException ex )
+            {
+                LOG.log( Level.SEVERE, null, ex );
+            }
+            
+            Iterator<DirectoryEntry> _dirIter = _directoryMap.values().iterator();
+            DirectoryEntry _current = _dirIter.next();
+            int _currentOffset = 0;
+            byte[] _aFileName = new byte[ 256 ];
+            
+            System.out.println( _fileListing.toString() );
+            
+            int _cur = 8;
+            while( _cur < _fileListing.inflatedSize )
+            {
+                if( _cur == _fileListing.inflatedSize - 1 )
+                {
+                    _current.fileName = new String( _aFileName, 0, _currentOffset );
+                    _currentOffset = 0; 
+                }
+                else if( _fileListing.rawData[ _cur ] < 32
+                        && _fileListing.rawData[ _cur + 1 ] == 0
+                        && _fileListing.rawData[ _cur + 2 ] == 0 
+                        && _fileListing.rawData[ _cur + 3 ] == 0 )
+                {
+                    _current.fileName = new String( _aFileName, 0, _currentOffset - 1 );
+                    System.out.println( "FileName :: " + _current.fileName );
+
+                    _currentOffset = 0;
+                    _current = _dirIter.next();
+                    _cur += 3;
+                }
+                else
+                {
+                    _aFileName[ _currentOffset ] = _fileListing.rawData[ _cur ];
+                    _currentOffset ++;
+                }
+                
+                _cur += 1;
+            }
+            
+            hexDump( _directoryMap.firstEntry().getValue().rawData );
+//            try
+//            {
+                System.out.println( _directoryMap.firstEntry().getValue() );
+//                expand( _directoryMap.firstEntry().getValue().rawData
+//                        , _directoryMap.firstEntry().getValue().compressedSize
+//                        , _directoryMap.firstEntry().getValue().inflatedSize );
+                
+                String _path = _file.getParent();
+                File _f = new File( _path + "/" + _directoryMap.firstEntry().getValue().fileName );
+                FileOutputStream _fos = new FileOutputStream( _f );
+                _fos.write( _directoryMap.firstEntry().getValue().rawData );
+//            }
+//            catch( DataFormatException ex )
+//            {
+//                LOG.log( Level.SEVERE, null, ex );
+//            }
+//            hexDump( _directoryMap.firstEntry().getValue().rawData );
         }
+//        catch( DataFormatException ex )
+//        {
+//            LOG.log( Level.SEVERE, null, ex );
+//        }
+    }
+    
+
+    public void hexDump( byte[] _buffer )
+    {
+        int _colCount = 0;
+        for( int _cur = 0; _cur < _buffer.length; _cur ++ )
+        {
+            if( _colCount % 16 == 0 )
+            {
+                System.out.println();
+            }
+
+            if( _buffer[ _cur ] < 32 )
+            {
+                System.out.print( String.format( "%02x ", _buffer[ _cur ] ) );
+            }
+            else
+            {
+                System.out.print( String.format( "%c ", _buffer[ _cur ] ) );
+            }
+            _colCount ++;
+        }
+        System.out.println();
+    }
+    
+    
+    public byte[] expand( byte[] _buffer, int _compSize, int _expSize ) 
+    throws DataFormatException
+    {
+        byte[] _temp = new byte[ _expSize ];
+        Inflater _inflater = new Inflater();
+        
+        _inflater.setInput( _buffer, 0, _compSize );
+
+        int _count = _inflater.inflate( _temp );
+//        System.arraycopy( _temp, 0, _buffer, 0, _count );
+        
+        System.out.println( String.format( "\texpand: %d, %d, %d", _compSize, _expSize, _count ) );
+        
+        return _temp;
     }
     
     
     public static class FileHeader
     {
+        public FileHeader()
+        {
+        }
+
         public FileHeader( Integer _offset, String _cookie, Integer _magicValue )
         {
             this.offset = _offset;
@@ -160,7 +296,17 @@ public class Main
         
         public Integer offset;
         public String cookie;
-        public Integer magicValue;  // usually 13107
+        public Integer magicValue;  // usually 131072
+
+
+        @Override
+        public String toString()
+        {
+            return "FileHeader{" + "offset=" + offset 
+                    + ", cookie=" + cookie
+                    + ", magicValue=" + magicValue
+                    + '}';
+        }
     }
     
     
@@ -171,13 +317,32 @@ public class Main
             this.crc = _crc;
             this.offset = _offset;
             this.inflatedSize = _inflatedSize;
-            rawData = new byte[ _inflatedSize ];
+            
+            this.rawData = new byte[ _inflatedSize ];
         }
 
-        public Integer crc;
-        public Integer offset;
-        public Integer inflatedSize;
+        public int crc;
+        public int offset;
+        public int inflatedSize;
+        
+        public int compressedSize;
         public byte[] rawData;
+        public String fileName;
+
+
+        @Override
+        public String toString()
+        {
+            return "DirectoryEntry{" 
+                    + "crc=" + crc 
+                    + ", offset=" + offset
+                    + ", inflatedSize=" + inflatedSize
+                    + ", compressedSize=" + compressedSize 
+                    + ", rawData length=" + rawData.length
+                    + ", fileName=" + fileName + '}';
+        }
+        
+        
     }
     
     
@@ -194,41 +359,16 @@ public class Main
     }
     
     
-    public static class DataHeader
-    {
-        public DataHeader( Integer _compressedSize, Integer _inflatedSize )
-        {
-            this.compressedSize = _compressedSize;
-            this.inflatedSize = _inflatedSize;
-        }
-
-        public Integer compressedSize;
-        public Integer inflatedSize;
-    }
+//    public static class DataHeader
+//    {
+//        public DataHeader( Integer _compressedSize, Integer _inflatedSize )
+//        {
+//            this.compressedSize = _compressedSize;
+//            this.inflatedSize = _inflatedSize;
+//        }
+//
+//        public Integer compressedSize;
+//        public Integer inflatedSize;
+//    }
     
-    /*
-  TS3DFileHeader = Packed Record
-    DirectoryOffset        : LongWord;                   // File position of the S3D directory
-    MagicCookie            : Packed Array[0..3] Of Char; // Always "PFS ".  It identifies the file type
-    Unknown_Always_131072  : LongWord;                   // As the spec says, it always contains 131072 (128k)
-  End;
-    
-  FDirectory = array of ...
-  TS3DDirectoryEntry = Packed Record
-    CRC                    : LongWord;                   // Filename CRC.  Calculated with the standard IEEE 802.3 Ethernet CRC-32 algorithm.
-    DataOffset             : LongWord;                   // Position in the archive of the compressed data
-    DataLengthInflated     : LongWord;                   // The file size once inflated
-  End;
-    
-  TS3DFileFooter = Packed Record
-    SteveCookie5           : Packed Array[0..4] Of Char; // Always "STEVE".
-    Date                   : LongWord;                   // I think the patcher uses this to check a file's version
-  End;
-    
-  TS3DDataBlockHeader = Packed Record
-    DeflatedLength         : LongWord;                   // Compressed size
-    InflatedLength         : LongWord;                   // Uncompressed size
-  End;
-
-    */
 }

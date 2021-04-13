@@ -9,19 +9,16 @@ package com.latticeware.eqexplorer.data;
  *
  * @author sfisque
  */
-public class DirectoryEntry
+public class DataHeader_s3d
 {
-    
-    public DirectoryEntry( Integer _crc, Integer _offset, Integer _inflatedSize )
-    {
-        this.crc = _crc;
-        this.offset = _offset;
-        this.inflatedSize = _inflatedSize;
-        rawData = new byte[ _inflatedSize ];
-    }
-    public Integer crc;
-    public Integer offset;
+    public Integer compressedSize;
     public Integer inflatedSize;
-    public byte[] rawData;
+    
+    
+    public DataHeader_s3d( Integer _compressedSize, Integer _inflatedSize )
+    {
+        this.compressedSize = _compressedSize;
+        this.inflatedSize = _inflatedSize;
+    }
     
 }

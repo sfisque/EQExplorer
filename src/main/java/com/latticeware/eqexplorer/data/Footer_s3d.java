@@ -9,10 +9,10 @@ package com.latticeware.eqexplorer.data;
  *
  * @author sfisque
  */
-public class Footer
+public class Footer_s3d
 {
     
-    public Footer( String _signature, Integer _date )
+    public Footer_s3d( String _signature, Integer _date )
     {
         this.signature = _signature;
         this.date = _date;

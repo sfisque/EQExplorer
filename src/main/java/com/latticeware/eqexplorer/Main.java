@@ -6,6 +6,7 @@
 package com.latticeware.eqexplorer;
 
 
+import com.latticeware.eqexplorer.data.DirectoryEntry;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -148,87 +149,4 @@ public class Main
         }
     }
     
-    
-    public static class FileHeader
-    {
-        public FileHeader( Integer _offset, String _cookie, Integer _magicValue )
-        {
-            this.offset = _offset;
-            this.cookie = _cookie;
-            this.magicValue = _magicValue;
-        }
-        
-        public Integer offset;
-        public String cookie;
-        public Integer magicValue;  // usually 13107
-    }
-    
-    
-    public static class DirectoryEntry
-    {
-        public DirectoryEntry( Integer _crc, Integer _offset, Integer _inflatedSize )
-        {
-            this.crc = _crc;
-            this.offset = _offset;
-            this.inflatedSize = _inflatedSize;
-            rawData = new byte[ _inflatedSize ];
-        }
-
-        public Integer crc;
-        public Integer offset;
-        public Integer inflatedSize;
-        public byte[] rawData;
-    }
-    
-    
-    public static class Footer
-    {
-        public Footer( String _signature, Integer _date )
-        {
-            this.signature = _signature;
-            this.date = _date;
-        }
-
-        public String signature;
-        public Integer date;
-    }
-    
-    
-    public static class DataHeader
-    {
-        public DataHeader( Integer _compressedSize, Integer _inflatedSize )
-        {
-            this.compressedSize = _compressedSize;
-            this.inflatedSize = _inflatedSize;
-        }
-
-        public Integer compressedSize;
-        public Integer inflatedSize;
-    }
-    
-    /*
-  TS3DFileHeader = Packed Record
-    DirectoryOffset        : LongWord;                   // File position of the S3D directory
-    MagicCookie            : Packed Array[0..3] Of Char; // Always "PFS ".  It identifies the file type
-    Unknown_Always_131072  : LongWord;                   // As the spec says, it always contains 131072 (128k)
-  End;
-    
-  FDirectory = array of ...
-  TS3DDirectoryEntry = Packed Record
-    CRC                    : LongWord;                   // Filename CRC.  Calculated with the standard IEEE 802.3 Ethernet CRC-32 algorithm.
-    DataOffset             : LongWord;                   // Position in the archive of the compressed data
-    DataLengthInflated     : LongWord;                   // The file size once inflated
-  End;
-    
-  TS3DFileFooter = Packed Record
-    SteveCookie5           : Packed Array[0..4] Of Char; // Always "STEVE".
-    Date                   : LongWord;                   // I think the patcher uses this to check a file's version
-  End;
-    
-  TS3DDataBlockHeader = Packed Record
-    DeflatedLength         : LongWord;                   // Compressed size
-    InflatedLength         : LongWord;                   // Uncompressed size
-  End;
-
-    */
 }

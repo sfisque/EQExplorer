@@ -7,8 +7,11 @@ package com.latticeware.eqexplorer.io;
 
 import com.latticeware.eqexplorer.Munger;
 import com.latticeware.eqexplorer.data.FileHeader_wld;
+import com.latticeware.eqexplorer.data.Fragment_wld;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,6 +27,7 @@ public class Stream_wld
 
         
     private FileHeader_wld wldHeader = new FileHeader_wld();
+    private List<Fragment_wld> fragmentList = new ArrayList<>();
 
 
     public void load( byte[] fileBuffer ) 
@@ -74,7 +78,30 @@ public class Stream_wld
                 }
             }
             
-            System.out.println( wldHeader );
+            LOG.log( Level.INFO, "{0}\n\n", wldHeader );
+                        
+            while( _bais.available() > 0 && fragmentList.size() < wldHeader.fragmentCount )
+            {
+                Fragment_wld _frag = new Fragment_wld();
+                
+                _bais.read( _buffer, 0, 4 );
+                _frag.size = Munger.fourBytesToInt( _buffer );
+                _bais.read( _buffer, 0, 4 );
+                _frag.id = Munger.fourBytesToInt( _buffer );
+                
+                
+                byte[] _fragBuffer = new byte[ _frag.size ];
+                _bais.read( _fragBuffer, 0, _frag.size );
+                
+                LOG.log( Level.INFO, "{0}::{1}\n\n", new Object[] { _frag, hexdump( _fragBuffer ) } );
+                // deconstruct the extra into the fragment type bits based on id field
+                
+                // then add it to the fragment list
+                
+                fragmentList.add( _frag );
+            }
+            
+            LOG.log( Level.INFO, "{0}\n\n", fragmentList );
         }
         catch( IOException err )
         {
@@ -82,4 +109,16 @@ public class Stream_wld
         }
     }
     
+    private String hexdump( byte[] _stream )
+    {
+        StringBuilder _sb = new StringBuilder();
+        
+        for( byte _b : _stream )
+        {
+            _sb.append( String.format( " 0x%02x", _b ) );
+        }
+        
+        return _sb.toString();
+    }
+
 }

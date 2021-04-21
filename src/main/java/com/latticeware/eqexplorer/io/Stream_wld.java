@@ -8,9 +8,13 @@ package com.latticeware.eqexplorer.io;
 import com.latticeware.eqexplorer.Munger;
 import com.latticeware.eqexplorer.data.FileHeader_wld;
 import com.latticeware.eqexplorer.data.Fragment_wld;
+import com.latticeware.eqexplorer.data.Fragment_wld_03;
+import com.latticeware.eqexplorer.data.GlobalAmbientLight;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,11 +28,65 @@ public class Stream_wld
     private static final Logger LOG = Logger.getLogger(Stream_wld.class.getName() );
     
     private static final int[] conversion = { 0x95, 0x3A, 0xC5, 0x2A, 0x95, 0x7A, 0x95, 0x6A };
+    private static final HashMap<Byte,Class<? extends Fragment_wld>> PROCESSOR_MAP;
 
         
-    private FileHeader_wld wldHeader = new FileHeader_wld();
-    private List<Fragment_wld> fragmentList = new ArrayList<>();
+    private final FileHeader_wld wldHeader = new FileHeader_wld();
+    private final List<Fragment_wld> fragmentList = new ArrayList<>();
+    
+    
+    
+    static
+    {
+        PROCESSOR_MAP = new HashMap<>( 17 );
+        
+        PROCESSOR_MAP.put( (byte) 0x03, Fragment_wld_03.class);
+        PROCESSOR_MAP.put( (byte) 0x04, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x05, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x30, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x31, Fragment_wld.class);
+        
+        PROCESSOR_MAP.put( (byte) 0x21, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x22, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x29, Fragment_wld.class);
+        
+        PROCESSOR_MAP.put( (byte) 0x36, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x37, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x2f, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x2d, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x2c, Fragment_wld.class);
+        
+        PROCESSOR_MAP.put( (byte) 0x10, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x11, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x12, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x13, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x14, Fragment_wld.class);
 
+        PROCESSOR_MAP.put( (byte) 0x1b, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x1c, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x28, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x2a, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x35, GlobalAmbientLight.class );
+        
+        PROCESSOR_MAP.put( (byte) 0x32, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x33, Fragment_wld.class);
+        
+        PROCESSOR_MAP.put( (byte) 0x26, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x27, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x34, Fragment_wld.class);
+        
+        PROCESSOR_MAP.put( (byte) 0x15, Fragment_wld.class);
+
+        // unknown use
+        PROCESSOR_MAP.put( (byte) 0x06, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x07, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x08, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x09, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x16, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x17, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x18, Fragment_wld.class);
+    }
+    
 
     public void load( byte[] fileBuffer ) 
     throws IOException
@@ -55,6 +113,8 @@ public class Stream_wld
             
             _bais.read( _stringBuffer, 0, wldHeader.stringHashSize );
             
+            wldHeader.stringTable = Munger.wldStringConvert( wldHeader.stringHashSize, _stringBuffer );
+            /*
             byte[] _string = new byte[ wldHeader.stringHashSize ];
             int _len = 0;
 
@@ -77,21 +137,23 @@ public class Stream_wld
                     _len ++;
                 }
             }
-            
+            */
             LOG.log( Level.INFO, "{0}\n\n", wldHeader );
                         
             while( _bais.available() > 0 && fragmentList.size() < wldHeader.fragmentCount )
             {
-                Fragment_wld _frag = new Fragment_wld();
-                
                 _bais.read( _buffer, 0, 4 );
-                _frag.size = Munger.fourBytesToInt( _buffer );
+                Integer _size = Munger.fourBytesToInt( _buffer );
                 _bais.read( _buffer, 0, 4 );
-                _frag.id = Munger.fourBytesToInt( _buffer );
+                Integer _id = Munger.fourBytesToInt( _buffer );
                 
+                Fragment_wld _frag = PROCESSOR_MAP.get( _id.byteValue() ).getConstructor().newInstance();
+                _frag.id = _id;
+                _frag.size = _size;
                 
-                byte[] _fragBuffer = new byte[ _frag.size ];
-                _bais.read( _fragBuffer, 0, _frag.size );
+                byte[] _fragBuffer = new byte[ _size ];
+                _bais.read( _fragBuffer, 0, _size );
+                _frag.processBytes( _fragBuffer );
                 
                 LOG.log( Level.INFO, "{0}::{1}\n\n", new Object[] { _frag, hexdump( _fragBuffer ) } );
                 // deconstruct the extra into the fragment type bits based on id field
@@ -103,11 +165,16 @@ public class Stream_wld
             
             LOG.log( Level.INFO, "{0}\n\n", fragmentList );
         }
-        catch( IOException err )
+        catch( IOException | SecurityException | NoSuchMethodException 
+                | InvocationTargetException 
+                | InstantiationException 
+                | IllegalAccessException 
+                | IllegalArgumentException err )
         {
             LOG.log( Level.SEVERE, "", err );
         }
     }
+
     
     private String hexdump( byte[] _stream )
     {

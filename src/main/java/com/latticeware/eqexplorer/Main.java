@@ -1,12 +1,12 @@
 package com.latticeware.eqexplorer;
 
 
-import com.latticeware.eqexplorer.data.DirectoryEntry_s3d;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.latticeware.eqexplorer.io.Stream_s3d;
 import com.latticeware.eqexplorer.io.Stream_wld;
+import com.latticeware.eqexplorer.data.DirectoryEntry_s3d;
 
 
 /**

@@ -5,6 +5,9 @@
  */
 package com.latticeware.eqexplorer;
 
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -14,6 +17,7 @@ import java.util.zip.Inflater;
  */
 public class Munger
 {
+    private static final int[] conversion = { 0x95, 0x3A, 0xC5, 0x2A, 0x95, 0x7A, 0x95, 0x6A };
 
     /**
      *
@@ -80,4 +84,40 @@ public class Munger
         return _temp;
     }
     
+    
+    public static List<String> wldStringConvert( int _count, byte[] _buffer )
+    {
+        List<String> _list = new ArrayList<>();
+        ByteArrayOutputStream _string = new ByteArrayOutputStream();
+        
+        int _len = 0;
+
+        for( int _index = 0; _index < _count; _index ++ )
+        {
+            int _char = ( _buffer[ _index ] ^ conversion[ _index % 8 ] ) % 256;
+
+            if( _char == 0 )
+            {
+                if( _len > 0 )
+                {
+                    _list.add( _string.toString() );
+                    _string.reset();
+                }
+                _len = 0;
+            }
+            else
+            {
+                _string.write( _char );
+                _len ++;
+            }
+            
+            if( _len == _count )
+            {
+                _list.add( _string.toString() );
+                _string.reset();
+            }
+        }
+        
+        return _list;
+    }
 }

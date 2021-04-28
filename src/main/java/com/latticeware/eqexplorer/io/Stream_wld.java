@@ -7,10 +7,13 @@ package com.latticeware.eqexplorer.io;
 
 import com.latticeware.eqexplorer.Munger;
 import com.latticeware.eqexplorer.data.BitmapInfo;
+import com.latticeware.eqexplorer.data.BitmapInfoReference;
 import com.latticeware.eqexplorer.data.FileHeader_wld;
 import com.latticeware.eqexplorer.data.Fragment_wld;
 import com.latticeware.eqexplorer.data.BitmapName;
 import com.latticeware.eqexplorer.data.GlobalAmbientLight;
+import com.latticeware.eqexplorer.data.Material;
+import com.latticeware.eqexplorer.data.MaterialList;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -46,9 +49,9 @@ public class Stream_wld
 
         PROCESSOR_MAP.put((byte) 0x03, BitmapName.class);
         PROCESSOR_MAP.put( (byte) 0x04, BitmapInfo.class);
-        PROCESSOR_MAP.put( (byte) 0x05, Fragment_wld.class);
-        PROCESSOR_MAP.put( (byte) 0x30, Fragment_wld.class);
-        PROCESSOR_MAP.put( (byte) 0x31, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x05, BitmapInfoReference.class);
+        PROCESSOR_MAP.put( (byte) 0x30, Material.class);
+        PROCESSOR_MAP.put( (byte) 0x31, MaterialList.class);
         
             // BSP Tree
 

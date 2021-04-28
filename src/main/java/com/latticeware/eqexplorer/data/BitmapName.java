@@ -48,7 +48,7 @@ Munger.hexDump( _slice );
     @Override
     public String toString()
     {
-        return "Fragment_wld_03{" 
+        return "BitmapName{" 
                 + "size=" + size
                 + ", id=" + id
                 + ", nameReference=" + nameReference 

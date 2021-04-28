@@ -12,7 +12,7 @@ import java.util.Arrays;
  *
  * @author sfisque
  */
-public class Fragment_wld_03
+public class BitmapName
 extends Fragment_Ref_wld
 {  
     /*

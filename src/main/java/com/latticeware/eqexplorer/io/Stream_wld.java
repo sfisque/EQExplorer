@@ -6,9 +6,10 @@
 package com.latticeware.eqexplorer.io;
 
 import com.latticeware.eqexplorer.Munger;
+import com.latticeware.eqexplorer.data.BitmapInfo;
 import com.latticeware.eqexplorer.data.FileHeader_wld;
 import com.latticeware.eqexplorer.data.Fragment_wld;
-import com.latticeware.eqexplorer.data.Fragment_wld_03;
+import com.latticeware.eqexplorer.data.BitmapName;
 import com.latticeware.eqexplorer.data.GlobalAmbientLight;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -40,27 +41,38 @@ public class Stream_wld
     {
         PROCESSOR_MAP = new HashMap<>( 17 );
         
-        PROCESSOR_MAP.put( (byte) 0x03, Fragment_wld_03.class);
-        PROCESSOR_MAP.put( (byte) 0x04, Fragment_wld.class);
+
+            // Materials
+
+        PROCESSOR_MAP.put((byte) 0x03, BitmapName.class);
+        PROCESSOR_MAP.put( (byte) 0x04, BitmapInfo.class);
         PROCESSOR_MAP.put( (byte) 0x05, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x30, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x31, Fragment_wld.class);
         
+            // BSP Tree
+
         PROCESSOR_MAP.put( (byte) 0x21, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x22, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x29, Fragment_wld.class);
         
+            // Meshes
+
         PROCESSOR_MAP.put( (byte) 0x36, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x37, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x2f, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x2d, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x2c, Fragment_wld.class);
         
+            // Animation
+
         PROCESSOR_MAP.put( (byte) 0x10, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x11, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x12, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x13, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x14, Fragment_wld.class);
+
+            // Lights
 
         PROCESSOR_MAP.put( (byte) 0x1b, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x1c, Fragment_wld.class);
@@ -68,13 +80,16 @@ public class Stream_wld
         PROCESSOR_MAP.put( (byte) 0x2a, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x35, GlobalAmbientLight.class );
         
+            // Vertex colors
         PROCESSOR_MAP.put( (byte) 0x32, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x33, Fragment_wld.class);
         
+        // Particle Cloud
         PROCESSOR_MAP.put( (byte) 0x26, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x27, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x34, Fragment_wld.class);
         
+        // General
         PROCESSOR_MAP.put( (byte) 0x15, Fragment_wld.class);
 
         // unknown use

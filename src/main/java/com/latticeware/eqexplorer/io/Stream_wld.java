@@ -11,6 +11,9 @@ import com.latticeware.eqexplorer.data.BitmapInfoReference;
 import com.latticeware.eqexplorer.data.FileHeader_wld;
 import com.latticeware.eqexplorer.data.Fragment_wld;
 import com.latticeware.eqexplorer.data.BitmapName;
+import com.latticeware.eqexplorer.data.BspRegion;
+import com.latticeware.eqexplorer.data.BspRegionType;
+import com.latticeware.eqexplorer.data.BspTree;
 import com.latticeware.eqexplorer.data.GlobalAmbientLight;
 import com.latticeware.eqexplorer.data.Material;
 import com.latticeware.eqexplorer.data.MaterialList;
@@ -55,9 +58,9 @@ public class Stream_wld
         
             // BSP Tree
 
-        PROCESSOR_MAP.put( (byte) 0x21, Fragment_wld.class);
-        PROCESSOR_MAP.put( (byte) 0x22, Fragment_wld.class);
-        PROCESSOR_MAP.put( (byte) 0x29, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x21, BspTree.class);
+        PROCESSOR_MAP.put( (byte) 0x22, BspRegion.class);
+        PROCESSOR_MAP.put( (byte) 0x29, BspRegionType.class);
         
             // Meshes
 

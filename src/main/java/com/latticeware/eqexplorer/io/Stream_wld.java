@@ -17,6 +17,7 @@ import com.latticeware.eqexplorer.data.BspTree;
 import com.latticeware.eqexplorer.data.GlobalAmbientLight;
 import com.latticeware.eqexplorer.data.Material;
 import com.latticeware.eqexplorer.data.MaterialList;
+import com.latticeware.eqexplorer.data.Mesh;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -45,9 +46,8 @@ public class Stream_wld
     
     static
     {
-        PROCESSOR_MAP = new HashMap<>( 17 );
+        PROCESSOR_MAP = new HashMap<>( 31 );
         
-
             // Materials
 
         PROCESSOR_MAP.put((byte) 0x03, BitmapName.class);
@@ -64,7 +64,7 @@ public class Stream_wld
         
             // Meshes
 
-        PROCESSOR_MAP.put( (byte) 0x36, Fragment_wld.class);
+        PROCESSOR_MAP.put( (byte) 0x36, Mesh.class);
         PROCESSOR_MAP.put( (byte) 0x37, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x2f, Fragment_wld.class);
         PROCESSOR_MAP.put( (byte) 0x2d, Fragment_wld.class);
@@ -135,30 +135,7 @@ public class Stream_wld
             _bais.read( _stringBuffer, 0, wldHeader.stringHashSize );
             
             wldHeader.stringTable = Munger.wldStringConvert( wldHeader.stringHashSize, _stringBuffer );
-            /*
-            byte[] _string = new byte[ wldHeader.stringHashSize ];
-            int _len = 0;
 
-            for( int _index = 0; _index < wldHeader.stringHashSize; _index ++ )
-            {
-                int _char = ( _stringBuffer[ _index ] ^ conversion[ _index % 8 ] ) % 256;
-
-                if( _char == 0 )
-                {
-                    if( _len > 0 )
-                    {
-                        String _s = new String( _string, 0, _len );
-                        wldHeader.addString( _s );
-                    }
-                    _len = 0;
-                }
-                else
-                {
-                    _string[ _len ] = (byte) _char;
-                    _len ++;
-                }
-            }
-            */
             LOG.log( Level.INFO, "{0}\n\n", wldHeader );
                         
             while( _bais.available() > 0 && fragmentList.size() < wldHeader.fragmentCount )

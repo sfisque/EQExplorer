@@ -39,8 +39,6 @@ FileName: BYTEs
         nameLength = (short) Munger.twoBytesToInt( _slice );
         
         _slice = Arrays.copyOfRange( _buffer, 10, 10 + nameLength );
-System.out.println( this.toString() );
-Munger.hexDump( _slice );
 
         fileName = Munger.wldStringConvert( nameLength, _slice ).get( 0 );
     }

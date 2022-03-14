@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import com.latticeware.eqexplorer.io.Stream_s3d;
 import com.latticeware.eqexplorer.io.Stream_wld;
 import com.latticeware.eqexplorer.data.DirectoryEntry_s3d;
+import java.util.Scanner;
 
 
 /**
@@ -20,11 +21,24 @@ public class Main
 
     public static void main( String[] _argv )
     {
+        String _fileName = "";
+        if( _argv.length > 0 )
+        {
+            _fileName = _argv[ 0 ];
+        }
+        else
+        {
+            System.out.println( "provide an s3d file to introspect" );
+            
+            Scanner _scanner = new Scanner( System.in );
+            _fileName = _scanner.next();
+        }
+        
         Stream_s3d s3dStream = new Stream_s3d();
         
         try
         {
-            s3dStream.load( _argv[ 0 ] );
+            s3dStream.load( _fileName );
             
             for( DirectoryEntry_s3d entry_s3d : s3dStream.getEntries() )
             {

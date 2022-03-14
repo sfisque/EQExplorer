@@ -65,7 +65,7 @@ public class MainTest
             expResult = expResult << 8;
             expResult += Byte.toUnsignedInt( _buffer[ _i ] );
         }
-        int result = instance.fourBytesToInt( _buffer );
+        int result = Munger.fourBytesToInt( _buffer );
 
         assertEquals( expResult, result );
     }
@@ -81,24 +81,8 @@ public class MainTest
         byte[] _buffer = null;
         Main instance = new Main();
         int expResult = 0;
-        int result = instance.bytesToBitMask( _buffer );
+        int result = Munger.bytesToBitMask( _buffer );
         assertEquals( expResult, result );
-        // TODO review the generated test code and remove the default call to fail.
-        fail( "The test case is a prototype." );
-    }
-
-
-    /**
-     * Test of load method, of class Main.
-     */
-//    @org.junit.jupiter.api.Test
-    public void testLoad()
-            throws Exception
-    {
-        System.out.println( "load" );
-        String _fileName = "";
-        Main instance = new Main();
-        instance.load( _fileName );
         // TODO review the generated test code and remove the default call to fail.
         fail( "The test case is a prototype." );
     }

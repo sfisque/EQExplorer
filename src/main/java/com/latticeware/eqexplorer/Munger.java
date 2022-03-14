@@ -5,8 +5,10 @@
  */
 package com.latticeware.eqexplorer;
 
+import com.jme3.math.Vector3f;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
@@ -36,7 +38,7 @@ public class Munger
      */
     public static int bytesToBitMask( byte[] _buffer )
     {
-        return Byte.toUnsignedInt( _buffer[4] ) + ( Byte.toUnsignedInt( _buffer[2] ) * 256 ) + ( Byte.toUnsignedInt( _buffer[1] ) * 256 * 256 ) + ( Byte.toUnsignedInt( _buffer[0] ) * 256 * 256 * 256 );
+        return Byte.toUnsignedInt( _buffer[3] ) + ( Byte.toUnsignedInt( _buffer[2] ) * 256 ) + ( Byte.toUnsignedInt( _buffer[1] ) * 256 * 256 ) + ( Byte.toUnsignedInt( _buffer[0] ) * 256 * 256 * 256 );
     }
 
     /**
@@ -49,6 +51,35 @@ public class Munger
         return Byte.toUnsignedInt( _buffer[0] ) + ( Byte.toUnsignedInt( _buffer[1] ) * 256 ) + ( Byte.toUnsignedInt( _buffer[2] ) * 256 * 256 ) + ( Byte.toUnsignedInt( _buffer[3] ) * 256 * 256 * 256 );
     }
 
+
+    public static Float twoBytesToFloat( byte[] _buffer )
+    {
+//        byte[] _slice = Arrays.copyOfRange( _buffer, 0, 2 );
+        return Float.intBitsToFloat( Munger.twoBytesToInt( _buffer ) );
+    }
+    
+    
+    public static Float fourBytesToFloat( byte[] _buffer )
+    {
+        byte[] _slice = Arrays.copyOfRange( _buffer, 0, 4 );
+        return Float.intBitsToFloat( Munger.fourBytesToInt(_slice ) );
+    }
+    
+    
+    public static Vector3f twelveBytesToVector3f( byte[] _buffer )
+    {
+        byte[] _slice = Arrays.copyOfRange( _buffer, 0, 4 );
+        float _x = Float.intBitsToFloat( Munger.fourBytesToInt(_slice ) );
+        
+        _slice = Arrays.copyOfRange( _buffer, 4, 8 );
+        float _y = Float.intBitsToFloat( Munger.fourBytesToInt(_slice ) );
+        
+        _slice = Arrays.copyOfRange( _buffer, 8, 12 );
+        float _z = Float.intBitsToFloat( Munger.fourBytesToInt(_slice ) );
+        
+        return new Vector3f( _x, _y, _z );
+    }
+    
     
     public static void hexDump( byte[] _buffer )
     {

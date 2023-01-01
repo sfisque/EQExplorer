@@ -7,9 +7,7 @@ package com.latticeware.eqexplorer.data;
 
 
 import com.latticeware.eqexplorer.Munger;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 
 /**
